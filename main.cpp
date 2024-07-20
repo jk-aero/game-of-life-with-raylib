@@ -10,19 +10,7 @@ bool lifeInfo[50][50];
 bool N[8];
 
 bool setLife(int ix, int iy) {
-    // No precomputed gradients mean this works for any number of grid coordinates
-    const unsigned w = 8 * sizeof(unsigned);
-    const unsigned s = w / 2;
-    unsigned a = ix, b = iy;
-    a *= 3284157443;
-
-    b ^= a << s | a >> w - s;
-    b *= 1911520717;
-
-    a ^= b << s | b >> w - s;
-    a *= 2048419325;
-    int random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
-
+    int random = rand();
     // Create the vector from the angle
     return random % 2;
 }
@@ -40,4 +28,94 @@ void getNeighbour(int x, int y)
     N[5] = lifeInfo[x + 1][y - 1];
     N[6] = lifeInfo[x + 1][y];
     N[7] = lifeInfo[x + 1][y + 1];
+}
+
+void checkRules(int x,int y)
+{
+    x /= 10; y /= 10;
+    
+    int val=0;
+    getNeighbour(x,y);
+
+    for (int i = 0; i < 8; i++){val += N[i];}
+
+    if (val < 2) {lifeInfo[x][y] = 0;return;}
+    if (val >3) {lifeInfo[x][y] = 0;return;}
+    if (val ==2 or val==3) { lifeInfo[x][y] = 1; return; }
+    if (val== 3 and !lifeInfo[x][y] ) { lifeInfo[x][y] = 1; return;}
+   
+}
+
+
+int main(void)
+{
+
+
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    SetTargetFPS(20);            // Set our game to run at 60 frames-per-second
+
+
+
+    for (int i = 0; i < screenWidth; i += cellSize)
+    {
+        for (int j = 0; j < screenWidth; j += cellSize)
+        {
+            lifeInfo[i/10][j/10] = setLife(i, j);
+        }
+    }
+
+
+
+
+
+     while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+ 
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+
+        ClearBackground(RAYWHITE);
+
+        for (int i = 0; i < screenWidth; i+=cellSize) 
+        {
+            for (int j = 0; j < screenWidth; j+=cellSize)
+            {   
+                
+                if (lifeInfo[i/10][j/10])
+                {
+                    DrawRectangle(i, j, 10, 10, WHITE);
+                }
+                else{ DrawRectangle(i, j, 10, 10, BLACK); }
+
+                checkRules(i,j);
+            }
+
+
+        }
+
+        //DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+
+        EndDrawing();
+     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow();        // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+
+    return 0;
 }
