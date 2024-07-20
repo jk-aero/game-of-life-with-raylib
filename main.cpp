@@ -10,7 +10,19 @@ bool lifeInfo[50][50];
 bool N[8];
 
 bool setLife(int ix, int iy) {
-    int random = rand();
+    // No precomputed gradients mean this works for any number of grid coordinates
+    const unsigned w = 8 * sizeof(unsigned);
+    const unsigned s = w / 2;
+    unsigned a = ix, b = iy;
+    a *= 3284157443;
+
+    b ^= a << s | a >> w - s;
+    b *= 1911520717;
+
+    a ^= b << s | b >> w - s;
+    a *= 2048419325;
+    int random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
+
     // Create the vector from the angle
     return random % 2;
 }
@@ -44,6 +56,10 @@ void checkRules(int x,int y)
     if (val ==2 or val==3) { lifeInfo[x][y] = 1; return; }
     if (val== 3 and !lifeInfo[x][y] ) { lifeInfo[x][y] = 1; return;}
    
+  
+
+
+
 }
 
 
@@ -52,7 +68,7 @@ int main(void)
 
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
-    SetTargetFPS(20);            // Set our game to run at 60 frames-per-second
+    SetTargetFPS(50);            // Set our game to run at 60 frames-per-second
 
 
 
