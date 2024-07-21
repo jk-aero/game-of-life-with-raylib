@@ -4,59 +4,59 @@
 
 const int screenWidth = 500;
 const int screenHeight = 500;
-const int cellSize = 10;
+const int cellSize = 5;
 
-bool lifeInfo[50][50];
-bool N[8];
+bool lifeInfo[screenWidth/cellSize][screenWidth / cellSize];
+bool nextGenlifeInfo[screenWidth / cellSize][screenWidth / cellSize];
+bool N[8];//n stamds for neighbors
 
 bool setLife(int ix, int iy) {
-    // No precomputed gradients mean this works for any number of grid coordinates
-    const unsigned w = 8 * sizeof(unsigned);
-    const unsigned s = w / 2;
-    unsigned a = ix, b = iy;
-    a *= 3284157443;
-
-    b ^= a << s | a >> w - s;
-    b *= 1911520717;
-
-    a ^= b << s | b >> w - s;
-    a *= 2048419325;
-    int random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
-
+    //int random = rand();
     // Create the vector from the angle
-    return random % 2;
+    return GetRandomValue(1,0);
 }
 
 void getNeighbour(int x, int y)
 {
-   
-    N[0] = lifeInfo[x - 1][y - 1];
-    N[1] = lifeInfo[x - 1][y];
-    N[2] = lifeInfo[x - 1][y + 1];
-
-    N[3] = lifeInfo[x][y - 1];
-    N[4] = lifeInfo[x][y + 1];
-
-    N[5] = lifeInfo[x + 1][y - 1];
-    N[6] = lifeInfo[x + 1][y];
-    N[7] = lifeInfo[x + 1][y + 1];
+    int count = screenHeight / cellSize;
+    N[0] = lifeInfo[(x - 1+count)%count]   [(y - 1+count) % count];
+    N[1] = lifeInfo[(x - 1+ count) % count][(y+ count) % count];
+    N[2] = lifeInfo[(x - 1+ count) % count][(y + 1+ count) % count];
+    N[3] = lifeInfo[(x+ count) % count]    [(y - 1+ count) % count];
+    N[4] = lifeInfo[(x+ count) % count]    [(y + 1+ count) % count];
+    N[5] = lifeInfo[(x + 1+ count) % count][(y - 1+ count) % count];
+    N[6] = lifeInfo[(x + 1+ count) % count][(y+ count) % count];
+    N[7] = lifeInfo[(x + 1+ count) % count][(y + 1+ count) % count];
 }
 
 void checkRules(int x,int y)
 {
-    x /= 10; y /= 10;
+    x /= cellSize; y /= cellSize;
     
-    int val=0;
+    int liveNeighbor=0;
     getNeighbour(x,y);
 
-    for (int i = 0; i < 8; i++){val += N[i];}
+    for (int i = 0; i < 8; i++){ liveNeighbor += N[i];}
 
-    if (val < 2) {lifeInfo[x][y] = 0;return;}
-    if (val >3) {lifeInfo[x][y] = 0;return;}
-    if (val ==2 or val==3) { lifeInfo[x][y] = 1; return; }
-    if (val== 3 and !lifeInfo[x][y] ) { lifeInfo[x][y] = 1; return;}
-   
-  
+
+    if (lifeInfo[x][y]) 
+    {
+        if (liveNeighbor > 3 || liveNeighbor < 2) 
+        {
+            nextGenlifeInfo[x][y] = 0;
+
+        }
+        else{ nextGenlifeInfo[x][y] = 1; }
+    }
+
+    else 
+    {
+        if(liveNeighbor==3){ nextGenlifeInfo[x][y] = 1; }
+        else{ nextGenlifeInfo[x][y] = 0; }
+
+    }
+
+
 
 
 
@@ -68,7 +68,7 @@ int main(void)
 
 
     InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
-    SetTargetFPS(50);            // Set our game to run at 60 frames-per-second
+    SetTargetFPS(30);            // Set our game to run at 60 frames-per-second
 
 
 
@@ -76,7 +76,7 @@ int main(void)
     {
         for (int j = 0; j < screenWidth; j += cellSize)
         {
-            lifeInfo[i/10][j/10] = setLife(i, j);
+            lifeInfo[i/cellSize][j/cellSize] = setLife(i, j);
         }
     }
 
@@ -91,25 +91,33 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(BLACK);
 
         for (int i = 0; i < screenWidth; i+=cellSize) 
         {
             for (int j = 0; j < screenWidth; j+=cellSize)
             {   
                 
-                if (lifeInfo[i/10][j/10])
+                if (lifeInfo[i/cellSize][j/cellSize])
                 {
-                    DrawRectangle(i, j, 10, 10, WHITE);
+                    DrawRectangle(i, j, cellSize-1, cellSize-1, GREEN);
                 }
-                else{ DrawRectangle(i, j, 10, 10, BLACK); }
-
+                else{ DrawRectangle(i, j, cellSize-1, cellSize-1, DARKGRAY); }
+                
+                
                 checkRules(i,j);
             }
 
 
         }
 
+        // Copy contents of nextGenlifeInfo to lifeInfo
+        for (int i = 0; i < screenWidth / cellSize; ++i) {
+            for (int j = 0; j < screenWidth / cellSize; ++j) {
+                lifeInfo[i][j] = nextGenlifeInfo[i][j];
+                nextGenlifeInfo[i][j] = 0;
+            }
+        }
         //DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
 
         EndDrawing();
